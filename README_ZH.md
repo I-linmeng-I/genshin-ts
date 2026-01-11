@@ -5,7 +5,7 @@
 
 <div align="center">
 
-使用 TypeScript 进行原神UGC - 千星奇遇项目开发，全面的类型系统与便捷的辅助函数, js原生api和Unity3d风格api支持, npm库支持, 面向 AI 编码工具的高可读/高可维护开发方式。
+使用 TypeScript 进行原神UGC - 千星奇域项目开发，全面的类型系统与便捷的辅助函数, js原生api和Unity3d风格api支持, npm库支持, 面向 AI 编码工具的高可读/高可维护开发方式。
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/josStorer/genshin-ts/blob/master/LICENSE)
 [![release](https://img.shields.io/github/release/josStorer/genshin-ts.svg)](https://github.com/josStorer/genshin-ts/releases/latest)
@@ -19,7 +19,7 @@
 
 ## 简介
 
-Genshin-TS（gsts）是一套使用Typescript进行千星奇遇项目开发的工具链。强调“代码级开发体验”和“节点图语义可控”，支持编译、注入、调试、优化、并行和增量构建。
+Genshin-TS（gsts）是一套使用Typescript进行千星奇域项目开发的工具链。强调“代码级开发体验”和“节点图语义可控”，支持编译、注入、调试、优化、并行和增量构建。
 
 ## 快速开始
 

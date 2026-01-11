@@ -3,7 +3,7 @@ pageType: home
 
 hero:
   text: Genshin-TS
-  tagline: 使用Typescript进行原神UGC-千星奇遇开发
+  tagline: 使用Typescript进行原神UGC-千星奇域开发
   actions:
     - theme: brand
       text: 文档

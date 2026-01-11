@@ -1,6 +1,6 @@
 # __PROJECT_NAME__
 
-这是一个基于 genshin-ts 的千星奇遇项目模板。你可以用 TypeScript 写逻辑，编译为节点图并注入到地图。
+这是一个基于 genshin-ts 的千星奇域项目模板。你可以用 TypeScript 写逻辑，编译为节点图并注入到地图。
 
 ## 快速开始
 
