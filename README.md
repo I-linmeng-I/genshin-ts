@@ -13,7 +13,7 @@ Use TypeScript to develop Genshin UGC (Miliastra Wonderland) projects. Full type
 
 English · [简体中文](README_ZH.md)
 
-[Docs](https://gsts.moe) · [Template Guide & Usage Details](create-genshin-ts/templates/start/README.md)
+[Docs](https://gsts.moe) · [Intro Video](https://www.youtube.com/watch?v=kEACvJzHwr0) · [Template Guide & Usage Details](create-genshin-ts/templates/start/README.md)
 
 </div>
 
