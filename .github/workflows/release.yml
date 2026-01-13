@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Changelog.md'
+      - 'Changelog_ZH.md'
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version and release notes
+        id: release
+        run: node scripts/release.mjs
+
+      - name: Upload release notes
+        if: steps.release.outputs.tag
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release_notes.md
+
+  release:
+    needs: check
+    if: needs.check.outputs.tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org/
+
+      - name: Update package versions
+        run: |
+          npm version ${{ needs.check.outputs.version }} --no-git-tag-version
+          cd create-genshin-ts && npm version ${{ needs.check.outputs.version }} --no-git-tag-version
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json create-genshin-ts/package.json
+          git commit -m "release ${{ needs.check.outputs.tag }}"
+          git push
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Publish genshin-ts
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+
+      - name: Publish create-genshin-ts
+        run: npm publish
+        working-directory: create-genshin-ts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.check.outputs.tag }}
+          name: ${{ needs.check.outputs.tag }}
+          body_path: release_notes.md
