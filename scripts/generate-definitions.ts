@@ -160,6 +160,8 @@ function buildSummaryFunctionTypeMap() {
 
 const genericRuleMap = buildGenericRuleMap()
 const summaryFunctionTypeMap = buildSummaryFunctionTypeMap()
+const getNodeFunctions = (node: { functions?: string[]; overview?: string[] }) =>
+  node.functions ?? node.overview ?? []
 function getSummaryTypeInfo(name: string) {
   const direct = summaryFunctionTypeMap.get(name)
   if (direct) return direct
@@ -394,19 +396,19 @@ function buildEvents() {
   eventDef.sections.forEach((section, sIndex) => {
     section.nodes.forEach((node, nIndex) => {
       const nodeZh = eventDefZh.sections[sIndex].nodes[nIndex]
-      const params = node.parameters.map((p, pIndex) => ({
+      const params = (node.parameters ?? []).map((p, pIndex) => ({
         name: toIdentifier(p.name),
-        nameZh: nodeZh.parameters[pIndex]?.name || '',
+        nameZh: nodeZh.parameters?.[pIndex]?.name || '',
         type: mapType(p.data_type),
         desc: p.description,
-        descZh: nodeZh.parameters[pIndex]?.description || '',
+        descZh: nodeZh.parameters?.[pIndex]?.description || '',
         input: p.io.toLowerCase().includes('input')
       }))
       events.push({
         name: toIdentifier(node.name),
         nameZh: nodeZh.name,
-        desc: node.functions.join('; '),
-        descZh: nodeZh.functions.join('; '),
+        desc: getNodeFunctions(node).join('; '),
+        descZh: getNodeFunctions(nodeZh).join('; '),
         params
       })
     })
@@ -717,8 +719,8 @@ function buildNodes() {
           nodes.push({
             name: nodeName,
             nameZh: nodeZh.name,
-            desc: node.functions.join('; '),
-            descZh: nodeZh.functions.join('; '),
+            desc: getNodeFunctions(node).join('; '),
+            descZh: getNodeFunctions(nodeZh).join('; '),
             nodeKind,
             params
           })
