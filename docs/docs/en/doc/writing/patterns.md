@@ -5,12 +5,13 @@
 - `number` -> float, `bigint` -> int.
 
 ## Lists and dicts
-- Use `list('int', [])` for empty lists.
-- To keep a param empty, use `list('int', null)` / `list(null)` / `list(0)` or `dict('str', 'int', null)` / `dict(null)` / `dict(0)` (use explicit types if inference fails).
+- Use `list(t, [])` for empty lists.
+- Use `list(t, 0)` / `list(t, null)` or `dict(k, v, 0)` as typed placeholders that keep pins unconnected.
+- Use `list(0)` / `list(null)` / `dict(0)` / `dict(null)` only when the target pin can infer the type.
 - `dict(...)` is read-only; use graph variables for writable dicts.
 
 ## Entity placeholders
-- `entity(0)` / `entity(null)` keeps entity params empty in the editor.
+- `entity(0)` / `entity(null)` keeps entity pins unconnected (empty).
 
 ## Debug output
 - Prefer `print(str(...))` or `console.log(x)` (single arg).

@@ -6,12 +6,13 @@
 - `f.printString(...)`
 
 ## Type helpers
-- `bool/int/float/str`
-- `vec3/guid/prefabId/configId/faction/entity`
+- `raw(...)` (skip compiler translation)
+- `bool/int/float/str` (`int(123)` allowed, `123n` preferred)
+- `vec3/guid/prefabId/configId/faction/entity` (typed literals; `entity(0)` / `entity(null)` placeholders)
 
 ## Collections
-- `list('int', items)`
-- `dict(...)`
+- `list(t, items)` / `list(t, 0)` placeholder
+- `dict(k, v, 0)` placeholder
 
 ## Scene and entities
 - `player(1)` / `stage` / `level` / `self`
@@ -20,4 +21,4 @@
 ## Other
 - `Math` / `Mathf` / `Vector3` / `Random`
 - `send('signal')` + `onSignal`
-- `setTimeout` / `setInterval`
+- `setTimeout` / `setInterval` / `clearTimeout` / `clearInterval`
