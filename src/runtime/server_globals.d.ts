@@ -27,15 +27,39 @@ import type {
 
 declare global {
   /**
-   * Returns the original value as a JavaScript expression, the compiler does not perform any processing
+   * Returns the original value as a JavaScript expression; the compiler does not perform any processing.
+   * Use this to keep JS semantics or bypass node-graph translation.
    *
-   * 返回js原生表达式结果, 编译器不做任何处理
+   * 返回 JS 原生表达式结果，编译器不做任何处理。
+   * 用于保留 JS 语义或绕过节点图转换。
    */
   function raw<T>(value: T): T
 
+  /**
+   * Convert to bool for node-graph conditions.
+   *
+   * 转换为 bool，常用于条件判断。
+   */
   function bool(value: BoolValue | IntValue): boolean
+  /**
+   * Convert to int (bigint) for integer-only nodes.
+   * Also usable as an explicit integer literal helper instead of bigint syntax (e.g. `int(123)`), though bigint is still recommended.
+   *
+   * 转换为 int（bigint），用于需要整数的节点。
+   * 也可作为整数字面量的显式声明方式替代 bigint 写法（如 `int(123)`），但通常仍推荐使用 bigint。
+   */
   function int(value: IntValue | BoolValue | FloatValue): bigint
+  /**
+   * Convert to float (number) for float nodes.
+   *
+   * 转换为 float（number），用于需要浮点数的节点。
+   */
   function float(value: FloatValue | IntValue): number
+  /**
+   * Convert to string; useful for logs
+   *
+   * 转为字符串，常用于日志
+   */
   function str(
     value:
       | StrValue
@@ -47,11 +71,59 @@ declare global {
       | FactionValue
       | Vec3Value
   ): string
+  /**
+   * Create a vec3 literal from `[x, y, z]` or an existing vec3.
+   * Usually you can pass `[x, y, z]` directly and let the compiler infer it.
+   * Use this helper mainly in list contexts to disambiguate and force vec3 type.
+   *
+   * 通过 `[x, y, z]` 或已有 vec3 创建 vec3 字面量。
+   * 大多数情况下直接传 `[x, y, z]` 即可自动推断。
+   * 该辅助函数主要用于列表场景消除歧义，确保类型为 vec3。
+   */
   function vec3(value: Vec3Value): vec3
+  /**
+   * Declare a GUID literal explicitly for generic pins (e.g. set custom variable).
+   * This is not a type conversion; the node graph does not perform runtime conversion.
+   *
+   * 用于显式声明 GUID 类型字面量（如“设置自定义变量”等涉及泛型参数的节点）。
+   * 该辅助函数不可用于数据类型转换（节点图不支持运行期转换）。
+   */
   function guid(value: GuidValue): guid
+  /**
+   * Declare a prefab ID literal explicitly for generic pins (e.g. set custom variable).
+   * This is not a type conversion; the node graph does not perform runtime conversion.
+   *
+   * 用于显式声明 prefab ID 类型字面量（如“设置自定义变量”等涉及泛型参数的节点）。
+   * 该辅助函数不可用于数据类型转换（节点图不支持运行期转换）。
+   */
   function prefabId(value: PrefabIdValue): prefabId
+  /**
+   * Declare a config ID literal explicitly for generic pins (e.g. set custom variable).
+   * This is not a type conversion; the node graph does not perform runtime conversion.
+   *
+   * 用于显式声明 config ID 类型字面量（如“设置自定义变量”等涉及泛型参数的节点）。
+   * 该辅助函数不可用于数据类型转换（节点图不支持运行期转换）。
+   */
   function configId(value: ConfigIdValue): configId
+  /**
+   * Declare a faction literal explicitly for generic pins (e.g. set custom variable).
+   * This is not a type conversion; the node graph does not perform runtime conversion.
+   *
+   * 用于显式声明 faction 类型字面量（如“设置自定义变量”等涉及泛型参数的节点）。
+   * 该辅助函数不可用于数据类型转换（节点图不支持运行期转换）。
+   */
   function faction(value: FactionValue): faction
+  /**
+   * Resolve an entity in multiple ways:
+   * - `entity(0)` / `entity(null)`: placeholder, keeps the pin unconnected.
+   * - `entity(guidNumber)`: look up by GUID value.
+   * - `entity(otherEntity)`: widen a subtype to a generic entity (bypass subtype constraints).
+   *
+   * 多种用法：
+   * - `entity(0)` / `entity(null)`：占位，保持节点参数引脚为空不连接。
+   * - `entity(guidNumber)`：通过 GUID 获取实体。
+   * - `entity(otherEntity)`：将实体子类型提升为通用实体类型（绕过子类型限制）。
+   */
   function entity(guidOrEntity: GuidValue | EntityValue | null | 0): entity
 
   /**
@@ -297,9 +369,11 @@ declare global {
   }
 
   /**
-   * Combines up to 50 Key-Value Pairs into one Dictionary
+   * Combines up to 50 Key-Value Pairs into one Dictionary.
+   * Use `dict(k, v, 0)` for typed empty placeholders (pin stays unconnected), or `dict(0)` / `dict(null)` when type can be inferred.
    *
-   * 拼装字典: 将至多50个键值对拼合为一个字典
+   * 拼装字典: 将至多 50 个键值对拼合为一个字典。
+   * 需要类型占位请用 `dict(k, v, 0)`（保持节点参数引脚为空不连接），可推断时可用 `dict(0)` / `dict(null)`。
    *
    * GSTS Note: The dictionary declared by this method cannot be modified, and a node graph variable dictionary must be declared if modification is required.
    *
@@ -548,6 +622,15 @@ declare global {
   function dict<K extends DictKeyType, V extends DictValueType>(
     pairs: { k: RuntimeParameterValueTypeMap[K]; v: RuntimeParameterValueTypeMap[V] }[]
   ): ReadonlyDict<K, V>
+  /**
+   * Creates a typed list or a placeholder list.
+   * Use `list(t, items)` for literals, `list(t, [])` for empty lists, and `list(t, 0)` / `list(t, null)` for typed placeholders.
+   * Use `list(0)` / `list(null)` only when the type can be inferred by the target pin (pin stays unconnected).
+   *
+   * 创建带类型的列表或占位列表。
+   * 字面量用 `list(t, items)`，空列表用 `list(t, [])`，类型占位用 `list(t, 0)` / `list(t, null)`。
+   * 仅在目标能推断类型时使用 `list(0)` / `list(null)`（保持节点参数引脚为空不连接）。
+   */
   function list(type: null | 0): never[]
   function list<
     T extends
