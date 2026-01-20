@@ -1,11 +1,16 @@
 import { EnumerationType } from '../definitions/enum.js'
-import { ServerEventPayloads } from '../definitions/events-payload.js'
+import type { ServerEventPayloadsByMode } from '../definitions/events-payload-mode.js'
+import type { ServerEventPayloads } from '../definitions/events-payload.js'
 import {
   ServerEventMetadata,
   ServerEventMetadataType,
   ServerEventName
 } from '../definitions/events.js'
-import { ServerExecutionFlowFunctions } from '../definitions/nodes.js'
+import type { NODE_TYPE_BY_METHOD } from '../definitions/node_modes.js'
+import {
+  ServerExecutionFlowFunctions,
+  type ServerExecutionFlowFunctionsByMode
+} from '../definitions/nodes.js'
 import type { ServerOnOverloads } from '../definitions/server_on_overloads.js'
 import {
   SERVER_EVENT_ZH_TO_EN,
@@ -122,23 +127,54 @@ export type ServerGraphOptions<Vars extends VariablesDefinition = VariablesDefin
       type?: Exclude<ServerGraphSubType, 'class'>
     })
 
-export type ServerExecutionFlowFunctionsWithVars<Vars extends VariablesDefinition> = Omit<
-  ServerExecutionFlowFunctions,
-  'get' | 'set'
-> &
-  NodeGraphVarApi<Vars>
+export type ServerExecutionFlowFunctionsWithVars<
+  Vars extends VariablesDefinition,
+  Mode extends ServerGraphMode
+> = Omit<ServerExecutionFlowFunctionsByMode<Mode>, 'get' | 'set'> & NodeGraphVarApi<Vars>
 
-export type ServerExecutionFlowFunctionsWithVarsZh<Vars extends VariablesDefinition> =
-  ServerExecutionFlowFunctionsWithVars<Vars> & {
-    [K in keyof typeof SERVER_F_ZH_TO_EN]: ServerExecutionFlowFunctionsWithVars<Vars>[(typeof SERVER_F_ZH_TO_EN)[K]]
-  }
+export type ServerExecutionFlowFunctionsWithVarsZh<
+  Vars extends VariablesDefinition,
+  Mode extends ServerGraphMode
+> = ServerExecutionFlowFunctionsWithVars<Vars, Mode> & {
+  [K in keyof typeof SERVER_F_ZH_TO_EN as Extract<
+    (typeof SERVER_F_ZH_TO_EN)[K],
+    keyof ServerExecutionFlowFunctionsWithVars<Vars, Mode>
+  > extends never
+    ? never
+    : K]: ServerExecutionFlowFunctionsWithVars<Vars, Mode>[Extract<
+    (typeof SERVER_F_ZH_TO_EN)[K],
+    keyof ServerExecutionFlowFunctionsWithVars<Vars, Mode>
+  >]
+}
 
 type ServerExecutionFlowFunctionsForLang<
   Vars extends VariablesDefinition,
-  Lang extends ServerLang
+  Lang extends ServerLang,
+  Mode extends ServerGraphMode
 > = Lang extends 'zh'
-  ? ServerExecutionFlowFunctionsWithVarsZh<Vars>
-  : ServerExecutionFlowFunctionsWithVars<Vars>
+  ? ServerExecutionFlowFunctionsWithVarsZh<Vars, Mode>
+  : ServerExecutionFlowFunctionsWithVars<Vars, Mode>
+
+type ModeEventName<
+  Mode extends ServerGraphMode,
+  Name extends string
+> = Name extends keyof typeof NODE_TYPE_BY_METHOD
+  ? (typeof NODE_TYPE_BY_METHOD)[Name] extends Mode
+    ? Name
+    : never
+  : Name
+
+type ServerEventNameByMode<M extends ServerGraphMode> = ModeEventName<M, ServerEventName>
+
+type ServerEventNameZhByMode<M extends ServerGraphMode> = {
+  [K in keyof typeof SERVER_EVENT_ZH_TO_EN]: (typeof SERVER_EVENT_ZH_TO_EN)[K] extends ServerEventNameByMode<M>
+    ? K
+    : never
+}[keyof typeof SERVER_EVENT_ZH_TO_EN]
+
+type ServerEventNameAnyByMode<M extends ServerGraphMode> =
+  | ServerEventNameByMode<M>
+  | ServerEventNameZhByMode<M>
 
 type ServerEventNameAny = ServerEventName | ServerEventNameZh
 
@@ -148,20 +184,21 @@ type ServerEventNameToEn<E> = E extends ServerEventName
     ? (typeof SERVER_EVENT_ZH_TO_EN)[E]
     : never
 
-interface ServerOnOverloadsZh<Vars extends VariablesDefinition, F> {
-  on<E extends ServerEventNameAny>(
+interface ServerOnOverloadsZh<Vars extends VariablesDefinition, Mode extends ServerGraphMode, F> {
+  on<E extends ServerEventNameAnyByMode<Mode>>(
     eventName: E,
-    handler: (evt: ServerEventPayloads[ServerEventNameToEn<E>], f: F) => void
+    handler: (evt: ServerEventPayloadsByMode<Mode>[ServerEventNameToEn<E>], f: F) => void
   ): this
 }
 
 export type ServerGraphApi<
   Vars extends VariablesDefinition,
-  Lang extends ServerLang = 'en'
+  Lang extends ServerLang = 'en',
+  Mode extends ServerGraphMode = 'beyond'
 > = (Lang extends 'zh'
-  ? ServerOnOverloads<Vars, ServerExecutionFlowFunctionsForLang<Vars, 'zh'>> &
-      ServerOnOverloadsZh<Vars, ServerExecutionFlowFunctionsForLang<Vars, 'zh'>>
-  : ServerOnOverloads<Vars, ServerExecutionFlowFunctionsForLang<Vars, 'en'>>) & {
+  ? ServerOnOverloads<Vars, Mode, ServerExecutionFlowFunctionsForLang<Vars, 'zh', Mode>> &
+      ServerOnOverloadsZh<Vars, Mode, ServerExecutionFlowFunctionsForLang<Vars, 'zh', Mode>>
+  : ServerOnOverloads<Vars, Mode, ServerExecutionFlowFunctionsForLang<Vars, 'en', Mode>>) & {
   /**
    * Monitors Signal trigger events defined in the Signal Manager; The Signal name to monitor must be selected first
    *
@@ -174,10 +211,10 @@ export type ServerGraphApi<
   onSignal(
     signalName: string,
     handler: (
-      evt: ServerEventPayloads['monitorSignal'],
-      f: ServerExecutionFlowFunctionsForLang<Vars, Lang>
+      evt: ServerEventPayloadsByMode<Mode>['monitorSignal'],
+      f: ServerExecutionFlowFunctionsForLang<Vars, Lang, Mode>
     ) => void
-  ): ServerGraphApi<Vars, Lang>
+  ): ServerGraphApi<Vars, Lang, Mode>
 }
 
 const SERVER_GRAPH_TYPES = new Set<ServerGraphSubType>(['entity', 'status', 'class', 'item'])
@@ -725,16 +762,36 @@ export class MetaCallRegistry {
 
 const serverRegistries: MetaCallRegistry[] = []
 
+type ServerGraphOptionsClassic<Vars extends VariablesDefinition> = Extract<
+  ServerGraphOptions<Vars>,
+  { mode: 'classic' }
+>
+
+type ServerGraphOptionsBeyond<Vars extends VariablesDefinition> = Exclude<
+  ServerGraphOptions<Vars>,
+  { mode: 'classic' }
+>
+
 function server<Vars extends VariablesDefinition = VariablesDefinition>(
-  options: ServerGraphOptions<Vars> & { lang: 'zh' }
-): ServerGraphApi<Vars, 'zh'>
+  options: ServerGraphOptionsClassic<Vars> & { lang: 'zh' }
+): ServerGraphApi<Vars, 'zh', 'classic'>
+function server<Vars extends VariablesDefinition = VariablesDefinition>(
+  options: ServerGraphOptionsClassic<Vars>
+): ServerGraphApi<Vars, 'en', 'classic'>
+function server<Vars extends VariablesDefinition = VariablesDefinition>(
+  options: ServerGraphOptionsBeyond<Vars> & { lang: 'zh' }
+): ServerGraphApi<Vars, 'zh', 'beyond'>
+function server<Vars extends VariablesDefinition = VariablesDefinition>(
+  options?: ServerGraphOptionsBeyond<Vars>
+): ServerGraphApi<Vars, 'en', 'beyond'>
 function server<Vars extends VariablesDefinition = VariablesDefinition>(
   options?: ServerGraphOptions<Vars>
-): ServerGraphApi<Vars, 'en'>
+): ServerGraphApi<Vars, ServerLang, ServerGraphMode>
 function server<Vars extends VariablesDefinition = VariablesDefinition>(
   options?: ServerGraphOptions<Vars>
 ) {
   type ResolvedLang = ServerLang
+  type ResolvedMode = ServerGraphMode
   const graphType = resolveServerGraphType(options?.type)
   const graphMode = resolveServerGraphMode(options?.mode)
   assertServerGraphModeCompatible(graphMode, graphType)
@@ -777,18 +834,21 @@ function server<Vars extends VariablesDefinition = VariablesDefinition>(
   const runHandler = <E extends ServerEventNameAny>(
     eventName: E,
     handler: (
-      evt: ServerEventPayloads[ServerEventNameToEn<E>],
-      f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang>
+      evt: ServerEventPayloadsByMode<ResolvedMode>[ServerEventNameToEn<E>],
+      f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang, ResolvedMode>
     ) => void,
     inputArgs: value[] = []
   ) => {
     const resolvedEventName = resolveEventName(eventName) as ServerEventNameToEn<E>
     const wrappedHandler = (
-      evt: ServerEventPayloads[ServerEventNameToEn<E>],
+      evt: ServerEventPayloadsByMode<ResolvedMode>[ServerEventNameToEn<E>],
       f: ServerExecutionFlowFunctions
     ) => {
       if (useZhAliases) applyZhAliases(f)
-      handler(evt, f as unknown as ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang>)
+      handler(
+        evt,
+        f as unknown as ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang, ResolvedMode>
+      )
     }
     registry.runServerHandler(resolvedEventName, wrappedHandler, inputArgs)
   }
@@ -797,8 +857,8 @@ function server<Vars extends VariablesDefinition = VariablesDefinition>(
     on<E extends ServerEventNameAny>(
       eventName: E,
       handler: (
-        evt: ServerEventPayloads[ServerEventNameToEn<E>],
-        f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang>
+        evt: ServerEventPayloadsByMode<ResolvedMode>[ServerEventNameToEn<E>],
+        f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang, ResolvedMode>
       ) => void
     ) {
       runHandler(eventName, handler)
@@ -807,8 +867,8 @@ function server<Vars extends VariablesDefinition = VariablesDefinition>(
     onSignal(
       signalName: string,
       handler: (
-        evt: ServerEventPayloads['monitorSignal'],
-        f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang>
+        evt: ServerEventPayloadsByMode<ResolvedMode>['monitorSignal'],
+        f: ServerExecutionFlowFunctionsForLang<Vars, ResolvedLang, ResolvedMode>
       ) => void
     ) {
       const signalNameObj = ensureLiteralStr(signalName, 'signalName')
@@ -816,7 +876,7 @@ function server<Vars extends VariablesDefinition = VariablesDefinition>(
       return this
     }
   }
-  return api as ServerGraphApi<Vars, ResolvedLang>
+  return api as ServerGraphApi<Vars, ResolvedLang, ResolvedMode>
 }
 
 export const g = {

@@ -1,3 +1,4 @@
+import type { ServerGraphMode } from '../runtime/IR.js'
 import {
   entity,
   type BoolValue,
@@ -14,6 +15,7 @@ import {
   type IntValue,
   type RuntimeParameterValueTypeMap,
   type StrValue,
+  type value,
   type vec3,
   type Vec3Value
 } from '../runtime/value.js'
@@ -36,7 +38,7 @@ import type {
   UIControlGroupStatus,
   UnitStatusAdditionResult
 } from './enum.js'
-import type { ServerExecutionFlowFunctions } from './nodes.js'
+import type { ServerExecutionFlowFunctions, ServerExecutionFlowFunctionsByMode } from './nodes.js'
 
 declare const __entityKind: unique symbol
 
@@ -5892,7 +5894,39 @@ export type EntityHelperFor<K extends EntityKind> = Pick<
 > &
   Pick<EntityHelperScoped, EntityHelperCommonKeys>
 
+type EntityHelperSourceName<K extends keyof EntityHelperAll> =
+  K extends keyof EntityHelperMethodAliasSources
+    ? EntityHelperMethodAliasSources[K]
+    : K extends keyof EntityHelperAliasSources
+      ? EntityHelperAliasSources[K]
+      : K extends EntityHelperMethodKeys
+        ? K
+        : K extends keyof EntityHelperOverrideIndices
+          ? K
+          : never
+
+type EntityHelperKeysByMode<M extends ServerGraphMode> = {
+  [K in keyof EntityHelperAll]: EntityHelperSourceName<K> extends keyof ServerExecutionFlowFunctionsByMode<M>
+    ? K
+    : never
+}[keyof EntityHelperAll]
+
+export type EntityHelperAllByMode<M extends ServerGraphMode> = Pick<
+  EntityHelperAll,
+  EntityHelperKeysByMode<M>
+>
+
+export type EntityHelperForByMode<K extends EntityKind, M extends ServerGraphMode> = Pick<
+  EntityHelperFor<K>,
+  Extract<keyof EntityHelperFor<K>, EntityHelperKeysByMode<M>>
+>
+
 export type EntityBase = Omit<entity, keyof EntityHelperAll>
+
+export type EntityValueByMode<M extends ServerGraphMode> = EntityBase & EntityHelperAllByMode<M>
+export type EntityOfByMode<K extends EntityKind, M extends ServerGraphMode> = EntityBase &
+  EntityKindMarker<K> &
+  EntityHelperForByMode<K, M>
 
 export type PlayerEntity = EntityBase & EntityKindMarker<'player'> & EntityHelperFor<'player'>
 export type CharacterEntity = EntityBase &
@@ -5901,6 +5935,23 @@ export type CharacterEntity = EntityBase &
 export type StageEntity = EntityBase & EntityKindMarker<'stage'> & EntityHelperFor<'stage'>
 export type ObjectEntity = EntityBase & EntityKindMarker<'object'> & EntityHelperFor<'object'>
 export type CreationEntity = EntityBase & EntityKindMarker<'creation'> & EntityHelperFor<'creation'>
+
+export type ReplaceEntityByMode<T, M extends ServerGraphMode> =
+  T extends EntityKindMarker<infer K>
+    ? EntityOfByMode<K, M>
+    : T extends entity
+      ? EntityValueByMode<M>
+      : T extends value
+        ? T
+        : T extends (...args: unknown[]) => unknown
+          ? T
+          : T extends ReadonlyArray<infer U>
+            ? ReadonlyArray<ReplaceEntityByMode<U, M>>
+            : T extends Array<infer U>
+              ? Array<ReplaceEntityByMode<U, M>>
+              : T extends object
+                ? { [K in keyof T]: ReplaceEntityByMode<T[K], M> }
+                : T
 
 declare module '../runtime/value.js' {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type

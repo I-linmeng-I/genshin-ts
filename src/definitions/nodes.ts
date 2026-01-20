@@ -10,7 +10,8 @@ import {
   LiteralValueType,
   SpecialValueTypeMap,
   ValueType,
-  Variable
+  Variable,
+  type ServerGraphMode
 } from '../runtime/IR.js'
 import { getRuntimeOptions } from '../runtime/runtime_config.js'
 import {
@@ -111,6 +112,7 @@ import {
   UnitStatusRemovalStrategy
 } from './enum.js'
 import type { ServerEventPayloads } from './events-payload.js'
+import type { NODE_TYPE_BY_METHOD } from './node_modes.js'
 
 export type {
   CharacterEntity,
@@ -15457,4 +15459,18 @@ export class ServerExecutionFlowFunctions {
     return ret as unknown as bigint
   }
   // === AUTO-GENERATED END ===
+}
+
+type NodeTypeByMethod = typeof NODE_TYPE_BY_METHOD
+
+type MethodAllowedByMode<
+  M extends ServerGraphMode,
+  K extends keyof ServerExecutionFlowFunctions
+> = K extends keyof NodeTypeByMethod ? (NodeTypeByMethod[K] extends M ? K : never) : K
+
+export type ServerExecutionFlowFunctionsByMode<M extends ServerGraphMode> = {
+  [K in keyof ServerExecutionFlowFunctions as MethodAllowedByMode<
+    M,
+    K
+  >]: ServerExecutionFlowFunctions[K]
 }
