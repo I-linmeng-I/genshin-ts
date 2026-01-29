@@ -1,3 +1,5 @@
+/* eslint-disable no-case-declarations */
+
 import { g } from 'genshin-ts/runtime/core'
 import { int } from 'genshin-ts/runtime/value'
 
@@ -28,8 +30,12 @@ g.server({
       switch (_evt.postChangeValue.asType('int')) {
         case 1n:
           const steps = f.getCustomVariable(self, 'ProcessStep').asType('int_list')
-          const nextstep = steps[index as any] + 1n;
-          f.modifyValueInList(f.getCustomVariable(self, 'ProcessStep').asType('int_list'), index, nextstep);
+          const nextstep = steps[index as unknown as number] + 1n
+          f.modifyValueInList(
+            f.getCustomVariable(self, 'ProcessStep').asType('int_list'),
+            index,
+            nextstep
+          )
           f.setCustomVariable<'str'>(self, 'StartProcess', '0n', true)
           break
         case 2n:

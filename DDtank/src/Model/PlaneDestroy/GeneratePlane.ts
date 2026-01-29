@@ -93,20 +93,20 @@ g.server({
     let start = 0n
     for (let i = 0; i < radiansListSorted.length; i++) {
       const index = f.searchListAndReturnValueId(radiansList, radiansListSorted[i])[0]
-      if (TypeList[index as any] == 2n && i == 0) {
+      if (TypeList[index as unknown as number] == 2n && i == 0) {
         //第一个是右边点，说明是跨pi的情况
         const startIndex = f.searchListAndReturnValueId(
           radiansList,
           radiansListSorted[radiansListSorted.length - 1]
         )[0]
-        f.insertValueIntoList(startPointList, 0, LPointList[startIndex as any])
-        f.insertValueIntoList(endPointList, 0, RPointList[index as any])
+        f.insertValueIntoList(startPointList, 0, LPointList[startIndex as unknown as number])
+        f.insertValueIntoList(endPointList, 0, RPointList[index as unknown as number])
       } else {
         if (i != radiansListSorted.length - 1 && start == 0n) {
-          f.insertValueIntoList(startPointList, 0, LPointList[index as any])
+          f.insertValueIntoList(startPointList, 0, LPointList[index as unknown as number])
         }
         if (start == 1n) {
-          f.insertValueIntoList(endPointList, 0, RPointList[index as any])
+          f.insertValueIntoList(endPointList, 0, RPointList[index as unknown as number])
         }
         start = (start + 1n) % 2n
       }
@@ -143,7 +143,7 @@ g.server({
           1,
           f.emptyList('int')
         )
-       } else {
+      } else {
         let chordLength = f.distanceBetweenTwoCoordinatePoints(startPoint, endPoint)
         let radius: number = explosionRadius
         if (chordLength > explosionRadius * 2) {
@@ -200,7 +200,7 @@ g.server({
           angleDiff = angleDiff + 2 * f.pi()
         }
 
-        const angleStep = -1*(PlaneLength) / explosionRadius
+        const angleStep = (-1 * PlaneLength) / explosionRadius
         f.printString('---angleStep---')
         f.printString(str(angleStep))
 
@@ -209,10 +209,10 @@ g.server({
         f.printString('---count---')
         f.printString(str(count))
 
-        for (let i = 0; i < (count as any); i++) {
+        for (let i = 0; i < (count as unknown as number); i++) {
           const mathAngleStart = currentAngle
           let posStart = f.create3dVector(
-            (crateCenter.x) + explosionRadius * f.sineFunction(mathAngleStart),
+            crateCenter.x + explosionRadius * f.sineFunction(mathAngleStart),
             PlaneYLoc,
             crateCenter.z + explosionRadius * f.cosineFunction(mathAngleStart)
           )
@@ -223,7 +223,7 @@ g.server({
 
           let posEnd = f.create3dVector(0, 0, 0)
 
-          if (i == (count as any) - 1) {
+          if (i == (count as unknown as number) - 1) {
             //最后一个板子分类，凸出了的话就从终点往回推，凹的话就用两个板子来实现
             if (f.distanceBetweenTwoCoordinatePoints(endPoint, posStart) < PlaneLength) {
               posEnd = endPoint
@@ -246,7 +246,7 @@ g.server({
               const finalRotation = f.create3dVector(
                 0,
                 f.radiansToDegrees(
-                  gstsServercustom_atan2((endPoint.x) - (finalStart.x), endPoint.z - finalStart.z)
+                  gstsServercustom_atan2(endPoint.x - finalStart.x, endPoint.z - finalStart.z)
                 ),
                 90
               )

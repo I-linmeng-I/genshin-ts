@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import { g } from 'genshin-ts/runtime/core'
 import { int } from 'genshin-ts/runtime/value'
 
@@ -6,31 +7,31 @@ import { constants } from './Constant'
 export function gstsServerGetProcessInfo(type: string) {
   const self = gsts.f.queryEntityByGuid(constants.GameProcessEntity)
   const processStack = gsts.f.getCustomVariable(self, 'ProcessStack').asType('int_list')
-  const currentProcessIndex = gsts.f.getListLength(processStack)-1n;
+  const currentProcessIndex = gsts.f.getListLength(processStack) - 1n
   let returnValue = 0n
   switch (type) {
     case 'arg1':
       const processArg1 = gsts.f.getCustomVariable(self, 'ProcessArg1').asType('int_list')
-      returnValue = processArg1[currentProcessIndex as any]
+      returnValue = processArg1[currentProcessIndex as unknown as number]
       break
     case 'arg2':
       const processArg2 = gsts.f.getCustomVariable(self, 'ProcessArg2').asType('int_list')
-      returnValue = processArg2[currentProcessIndex as any]
+      returnValue = processArg2[currentProcessIndex as unknown as number]
       break
     case 'arg3':
       const processArg3 = gsts.f.getCustomVariable(self, 'ProcessArg3').asType('int_list')
-      returnValue = processArg3[currentProcessIndex as any]
+      returnValue = processArg3[currentProcessIndex as unknown as number]
       break
     case 'arg4':
       const processArg4 = gsts.f.getCustomVariable(self, 'ProcessArg4').asType('int_list')
-      returnValue = processArg4[currentProcessIndex as any]
+      returnValue = processArg4[currentProcessIndex as unknown as number]
       break
     case 'step':
       const processstep = gsts.f.getCustomVariable(self, 'ProcessStep').asType('int_list')
-      returnValue = processstep[currentProcessIndex as any]
+      returnValue = processstep[currentProcessIndex as unknown as number]
       break
     case 'type':
-      returnValue = processStack[currentProcessIndex as any]
+      returnValue = processStack[currentProcessIndex as unknown as number]
       break
     case 'index':
       returnValue = currentProcessIndex

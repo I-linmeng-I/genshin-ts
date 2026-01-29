@@ -8,14 +8,14 @@ export const constants = {
   PlayerLocaterEntity: prefabId(1077936153),
   CharacterEntity: prefabId(1077936156),
 }
-export enum PlayerState{
+export enum PlayerState {
   Observing = 0,
   Inturn = 1,
   Attacking = 2,
   Dead = 3,
-  OutTurn = 4,
+  OutTurn = 4
 }
-export enum PlayerInput{
+export enum PlayerInput {
   Down = 1,
   Up = 2,
   Left = 4,

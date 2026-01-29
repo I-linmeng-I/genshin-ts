@@ -39,7 +39,7 @@ g.server({
     if (playerNum == 5n) {
       f.setCustomVariable<'int'>(configEntity, 'PlayerNum', 4n)
       //生成玩家控制器
-      gstsServerInitPlayerController(loadedPlayerList,true)
+      gstsServerInitPlayerController(loadedPlayerList, true)
       gstsServerProcessReturn(1n)
       f.stopTimer(f.getSelfEntity(), 'WaitPlayerLoad')
     }
@@ -63,14 +63,14 @@ g.server({
           f.switchMainCameraTemplate([loadedPlayerList[2] as PlayerEntity], 'Player3')
           break
       }
-      gstsServerInitPlayerController(loadedPlayerList,false)
+      gstsServerInitPlayerController(loadedPlayerList, false)
       gstsServerProcessReturn(1n)
       f.stopTimer(f.getSelfEntity(), 'WaitPlayerLoad')
     }
   }
 })
 
-function gstsServerInitPlayerController(loadedPlayerList: EntityValue[],isTestMode: boolean) {
+function gstsServerInitPlayerController(loadedPlayerList: EntityValue[], isTestMode: boolean) {
   const configEntity = gsts.f.queryEntityByGuid(constants.GameConfigEntity)
   //生成玩家控制器
   for (let i = 0n; i < gsts.f.getListLength(loadedPlayerList); i++) {
@@ -80,7 +80,7 @@ function gstsServerInitPlayerController(loadedPlayerList: EntityValue[],isTestMo
       constants.PlayerControllerEntity,
       gsts.f.create3dVector(0, locY, 0),
       gsts.f.create3dVector(0, 180, 180),
-      loadedPlayerList[i as any],
+      loadedPlayerList[i as unknown as number],
       false,
       1n,
       gsts.f.emptyList('int')
@@ -91,31 +91,46 @@ function gstsServerInitPlayerController(loadedPlayerList: EntityValue[],isTestMo
       0,
       PlayerController
     )
-    if(isTestMode){
+    if (isTestMode) {
       gsts.f.setCustomVariable<'entity'>(PlayerController, 'PlayerEntity', loadedPlayerList[0])
-    }
-    else{
-      gsts.f.setCustomVariable<'entity'>(PlayerController, 'PlayerEntity', loadedPlayerList[i as any])
+    } else {
+      gsts.f.setCustomVariable<'entity'>(
+        PlayerController,
+        'PlayerEntity',
+        loadedPlayerList[i as unknown as number]
+      )
     }
     gstsServerSetPlayerController(false, PlayerController)
     //传送玩家到控制器
     gsts.f.teleportPlayer(
-      loadedPlayerList[i as any] as PlayerEntity,
+      loadedPlayerList[i as unknown as number] as PlayerEntity,
       gsts.f.create3dVector(0, locY, 0),
       gsts.f.create3dVector(0, 0, 0)
     )
     switch (i) {
       case 0n:
-        gsts.f.switchMainCameraTemplate([loadedPlayerList[i as any] as PlayerEntity], 'Player1')
+        gsts.f.switchMainCameraTemplate(
+          [loadedPlayerList[i as unknown as number] as PlayerEntity],
+          'Player1'
+        )
         break
       case 1n:
-        gsts.f.switchMainCameraTemplate([loadedPlayerList[i as any] as PlayerEntity], 'Player2')
+        gsts.f.switchMainCameraTemplate(
+          [loadedPlayerList[i as unknown as number] as PlayerEntity],
+          'Player2'
+        )
         break
       case 2n:
-        gsts.f.switchMainCameraTemplate([loadedPlayerList[i as any] as PlayerEntity], 'Player3')
+        gsts.f.switchMainCameraTemplate(
+          [loadedPlayerList[i as unknown as number] as PlayerEntity],
+          'Player3'
+        )
         break
       case 3n:
-        gsts.f.switchMainCameraTemplate([loadedPlayerList[i as any] as PlayerEntity], 'Player4')
+        gsts.f.switchMainCameraTemplate(
+          [loadedPlayerList[i as unknown as number] as PlayerEntity],
+          'Player4'
+        )
         break
     }
     // f.activateDisableModelDisplay(
